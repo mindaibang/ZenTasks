@@ -14,10 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone TEXT,
     role TEXT CHECK(role IN ('admin', 'manager', 'member')) NOT NULL DEFAULT 'member',
     department_id INTEGER,
-    can_view_group_tasks INTEGER DEFAULT 0,
     approved INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME,
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
@@ -30,7 +28,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     status TEXT CHECK(status IN ('To Do', 'In Progress', 'Done')) DEFAULT 'To Do',
     start_date DATE,
     due_date DATE,
-    completed_at DATE,
     assigned_to INTEGER,
     created_by INTEGER,
     department_id INTEGER,
