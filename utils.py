@@ -17,18 +17,39 @@ def create_tables():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def create_default_admin():
+    conn = get_connection()
+    cursor = conn.cursor()
+    # Kiểm tra xem đã có user admin chưa
+    cursor.execute("SELECT * FROM users WHERE role='admin'")
+    if cursor.fetchone() is None:
+        cursor.execute("""
+            INSERT INTO users (username, password_hash, full_name, email, phone, role, approved)
+            VALUES (?, ?, ?, ?, ?, 'admin', 1)
+        """, (
+            'admin',  # username
+            hash_password('admin123'),  # password mặc định
+            'Default Admin',
+            'admin@example.com',
+            '0000000000'
+        ))
+        conn.commit()
+        print("✅ Đã tạo admin mặc định: username=admin, password=admin123")
+    else:
+        print("✅ Admin đã tồn tại, bỏ qua tạo mặc định.")
+    conn.close()
+
 def check_login(username, password):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT u.id, u.role, u.approved, u.full_name, d.name AS department
+        SELECT u.id, u.role, u.approved, u.full_name
         FROM users u
-        LEFT JOIN departments d ON u.department_id = d.id
         WHERE u.username=? AND u.password_hash=?
     """, (username, hash_password(password)))
     user = cursor.fetchone()
     conn.close()
-    return user  # (id, role, approved, full_name, department) or None
+    return user  # (id, role, approved, full_name) or None
 
 def get_departments():
     conn = get_connection()
@@ -45,7 +66,7 @@ def add_department(name):
         cursor.execute("INSERT INTO departments (name) VALUES (?)", (name,))
         conn.commit()
     except sqlite3.IntegrityError:
-        pass  # Ignore if already exists
+        pass  # Ignore nếu đã tồn tại
     conn.close()
 
 def get_pending_users():
@@ -86,17 +107,12 @@ def add_task(title, description, priority, start_date, due_date, assigned_to, cr
     conn.commit()
     conn.close()
 
-def get_tasks_summary(department_id=None):
+def get_tasks_summary():
     conn = get_connection()
     cursor = conn.cursor()
-    if department_id:
-        cursor.execute("""
-            SELECT status, COUNT(*) FROM tasks WHERE department_id=? GROUP BY status
-        """, (department_id,))
-    else:
-        cursor.execute("""
-            SELECT status, COUNT(*) FROM tasks GROUP BY status
-        """)
+    cursor.execute("""
+        SELECT status, COUNT(*) FROM tasks GROUP BY status
+    """)
     summary = cursor.fetchall()
     conn.close()
     return dict(summary)
