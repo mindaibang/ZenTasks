@@ -38,14 +38,3 @@ CREATE TABLE IF NOT EXISTS tasks (
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
-
--- Bảng bình luận
-CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER,
-    user_id INTEGER,
-    comment TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (task_id) REFERENCES tasks(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
